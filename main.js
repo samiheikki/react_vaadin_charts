@@ -6,7 +6,7 @@ var ReactDOM = require('react-dom');
 var MyChart = React.createClass({
   getInitialState: function() {
     return {
-      data1: '1,2,3,4,5',
+      data1: [1,2,3,4,5],
       data2: [4, 6, 8, 10],
       data3: [
         ["Aerospace", 90.0],
@@ -15,7 +15,8 @@ var MyChart = React.createClass({
         ["Automotive", 17.0],
         ["Consumers", 12.4],
         ["Subsidies", 1.4]
-        ]
+      ],
+      inputNumber: ''
     };
   },
   chartLoaded: function(event) {
@@ -24,14 +25,24 @@ var MyChart = React.createClass({
   serieClick: function(event) {
     console.log("click");
   },
+  pushNumber: function() {
+    var newData1 = this.state.data1;
+    newData1.push(parseInt(this.state.inputNumber));
+    this.setState({data1: newData1});
+    this.setState({inputNumber: ''});
+  },
+  handleinputNumberChange: function(event) {
+    this.setState({inputNumber: event.target.value});
+  },
   render: function() {
     return (
-      <div><vaadin-line-chart on-chart-loaded={this.chartLoaded} on-series-click={this.serieClick}>
+      <div><input type="number" placeholder="number" value={this.state.inputNumber} onChange={this.handleinputNumberChange}/><button onClick={this.pushNumber}>Push that number</button>
+      <vaadin-line-chart on-chart-loaded={this.chartLoaded} on-series-click={this.serieClick}>
         <chart-title>Fibonacci4</chart-title>
         <x-axis><title>Index</title></x-axis>
         <y-axis><title>Value</title></y-axis>
         <data-series>
-          <data>{this.state.data1}</data>
+          <data>{this.state.data1.map(JSON.stringify).join(',')}</data>
         </data-series>
         <data-series data={this.state.data2}>
         </data-series>

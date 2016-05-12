@@ -322,7 +322,6 @@ var ChartsReactPlugin = {
 };
 
 var registeredEvents = [];
-var monkeyPatchedExisting = [];
 
 /**
  * Register an event to listen for on Polymer elements.
@@ -352,28 +351,6 @@ function registerEvent(name, bubbled, captured) {
     },
     dependencies: [topLevelType]
   };
-
-  var existing = EventPluginRegistry.registrationNameModules[bubbled];
-  if (existing) {
-    if (monkeyPatchedExisting.indexOf(existing) !== -1) return;
-    monkeyPatchedExisting.push(existing);
-
-    // monkey-patch over existing function
-    var previous = existing.extractEvents;
-
-    existing.extractEvents = function (localTopLevelType, targetInst, nativeEvent, nativeEventTarget) {
-      var targetNode = targetInst && ReactDOMComponentTree.getNodeFromInstance(targetInst);
-
-      if (nativeEvent.type !== name || !isVaadinChart(targetNode)) {
-        return previous(localTopLevelType, targetInst, nativeEvent, nativeEventTarget);
-      }
-      var event = SyntheticEvent.getPooled(dispatchConfig, targetInst, nativeEvent, nativeEventTarget);
-      EventPropagators.accumulateTwoPhaseDispatches(event);
-      return event;
-    };
-
-    return;
-  }
 
   EventConstants.topLevelTypes[topLevelType] = topLevelType;
 
@@ -482,6 +459,7 @@ if (useShadyDOM) {
   DOMLazyTree.queueHTML = ShadyDOMLazyTree.queueHTML;
   DOMLazyTree.queueText = ShadyDOMLazyTree.queueText;
 }
+
 /**
  *  Name of the chart events to add to the configuration and its corresponding event for the chart element
  **/
@@ -536,9 +514,10 @@ var MyChart = React.createClass({
 
     getInitialState: function () {
         return {
-            data1: '1,2,3,4,5',
+            data1: [1, 2, 3, 4, 5],
             data2: [4, 6, 8, 10],
-            data3: [["Aerospace", 90.0], ["Medical", 53.6], ["Agriculture", 25.6], ["Automotive", 17.0], ["Consumers", 12.4], ["Subsidies", 1.4]]
+            data3: [["Aerospace", 90.0], ["Medical", 53.6], ["Agriculture", 25.6], ["Automotive", 17.0], ["Consumers", 12.4], ["Subsidies", 1.4]],
+            inputNumber: ''
         };
     },
     chartLoaded: function (event) {
@@ -547,10 +526,25 @@ var MyChart = React.createClass({
     serieClick: function (event) {
         console.log("click");
     },
+    pushNumber: function () {
+        var newData1 = this.state.data1;
+        newData1.push(parseInt(this.state.inputNumber));
+        this.setState({ data1: newData1 });
+        this.setState({ inputNumber: '' });
+    },
+    handleinputNumberChange: function (event) {
+        this.setState({ inputNumber: event.target.value });
+    },
     render: function () {
         return React.createElement(
             'div',
             null,
+            React.createElement('input', { type: 'number', placeholder: 'number', value: this.state.inputNumber, onChange: this.handleinputNumberChange }),
+            React.createElement(
+                'button',
+                { onClick: this.pushNumber },
+                'Push that number'
+            ),
             React.createElement(
                 'vaadin-line-chart',
                 { 'on-chart-loaded': this.chartLoaded, 'on-series-click': this.serieClick },
@@ -583,7 +577,7 @@ var MyChart = React.createClass({
                     React.createElement(
                         'data',
                         null,
-                        this.state.data1
+                        this.state.data1.map(JSON.stringify).join(',')
                     )
                 ),
                 React.createElement('data-series', { data: this.state.data2 })
