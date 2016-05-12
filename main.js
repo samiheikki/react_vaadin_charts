@@ -26,10 +26,12 @@ var MyChart = React.createClass({
     console.log("click");
   },
   pushNumber: function() {
-    var newData1 = this.state.data1;
-    newData1.push(parseInt(this.state.inputNumber));
-    this.setState({data1: newData1});
-    this.setState({inputNumber: ''});
+    if (!isNaN(parseInt(this.state.inputNumber))) {
+      var newData1 = this.state.data1;
+      newData1.push(parseInt(this.state.inputNumber));
+      this.setState({data1: newData1});
+      this.setState({inputNumber: ''});
+    }
   },
   handleinputNumberChange: function(event) {
     this.setState({inputNumber: event.target.value});
